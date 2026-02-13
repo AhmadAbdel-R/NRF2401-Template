@@ -513,4 +513,135 @@ This is mandatory for any system that can move or cause harm.
 - If you see repeats, you may be re-reading old packets or the link is unstable.
 
 
+# Flags in `ControlPacket` (Bitmask): Where to Add a New Flag + Why
+
+Your packet already has this field:
+```cpp
+uint8_t flags;
+```
+
+That one byte can store up to 8 on/off features by using each bit as a switch.
+
+## What is a Bitmask (Flags)?
+
+`flags` is a number, but we treat its bits like 8 switches:
+```
+bit 0 (value 1)   = 00000001
+bit 1 (value 2)   = 00000010
+bit 2 (value 4)   = 00000100
+bit 3 (value 8)   = 00001000
+...
+bit 7 (value 128) = 10000000
+```
+
+So one byte can represent:
+- ARM on/off
+- MODE on/off
+- BEEP on/off
+- etc…
+
+**All at once.**
+
+## Why Use Flags Instead of Adding More Variables?
+
+Because flags are perfect for booleans (true/false):
+- ✅ Smaller packet (less radio airtime)
+- ✅ Easy to add more toggles later without changing packet size much
+- ✅ Common embedded pattern
+
+> **Note:** Use a new struct variable only when you need a real number range (like throttle, altitude, battery voltage).
+
+## Where Do We Add a New Flag?
+
+You add it in **two places** (TX and RX), because they must agree on meaning.
+
+### Step 1: Choose a Bit Number + Document It (Recommended)
+
+Add these defines near the top of **BOTH** codes (transmitter + receiver):
+```cpp
+// Bit positions inside pkt.flags
+#define FLAG_ARM   0   // existing: bit 0
+#define FLAG_MODE  1   // existing: bit 1
+#define FLAG_BEEP  2   // NEW:      bit 2 (example)
+```
+
+**This answers "WHERE do we add it?"**: at the top as constants, so you don't forget what bit does what.
+
+---
+
+## How It Works in Your TRANSMITTER (Controller) Code
+
+### What You Already Have
+```cpp
+pkt.flags = 0;
+if (digitalRead(2)) pkt.flags |= (1 << 0); // arm
+if (digitalRead(3)) pkt.flags |= (1 << 1); // mode
+```
+
+### Rewrite It Using the Named Bits (Clearer)
+```cpp
+pkt.flags = 0;
+if (digitalRead(2)) pkt.flags |= (1 << FLAG_ARM);   // arm ON
+if (digitalRead(3)) pkt.flags |= (1 << FLAG_MODE);  // mode ON
+```
+
+### Adding a NEW Flag (Example: BEEP)
+
+Let's say you add a button on pin 9:
+```cpp
+pinMode(9, INPUT);
+```
+
+Then in `loop()`:
+```cpp
+if (digitalRead(9)) pkt.flags |= (1 << FLAG_BEEP);  // beep ON
+```
+
+### Why `|=` Feels Like an OR Gate
+
+`pkt.flags |= mask` means:
+> Keep whatever bits were already on, **and also turn this specific bit on**.
+
+So it's literally "OR", but the goal is: **turn on one switch without changing the others**.
+
+---
+
+## How It Works in Your RECEIVER (Drone) Code
+
+### What You Already Do
+```cpp
+bool armed = (pkt.flags & (1 << 0)) != 0;
+```
+
+### Rewrite Using Named Bits
+```cpp
+bool armed = (pkt.flags & (1 << FLAG_ARM)) != 0;
+bool mode  = (pkt.flags & (1 << FLAG_MODE)) != 0;
+bool beep  = (pkt.flags & (1 << FLAG_BEEP)) != 0; // NEW
+```
+
+### Why `&` is Used on RX
+
+`pkt.flags & mask` is a **"bit test"**:
+- Returns **non-zero** if that bit is ON
+- Returns **0** if that bit is OFF
+
+---
+
+## Turning a Flag OFF (Only If You Need It)
+
+Right now you build flags from scratch each loop (`pkt.flags = 0; ...`), so you don't need "turn off" operations.
+
+But for reference:
+```cpp
+pkt.flags &= ~(1 << FLAG_BEEP); // force BEEP bit to 0
+```
+
+---
+
+## Summary: Adding a Flag in One Sentence
+
+> To add a flag, you **assign it a bit number**, **set that bit in the transmitter**, and **check that same bit in the receiver**, because both sides must interpret the packet identically.
+
+
 
