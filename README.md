@@ -1,39 +1,25 @@
 # NRF2401 Template
 
-Starter templates for nRF24L01+ links (transmitter, receiver, and dual-radio test).
+Simple nRF24 starter repo with working transmitter/receiver templates.
 
-## Project Layout
+## Folders
 
-- `examples/NRF_TRANSMITTER_CODE/` -> TX example
-- `examples/NRF_RECEIVER_CODE/` -> RX example
-- `examples/DUAL_NRF_SAME_BUS_TEST/` -> dual-radio bus test
+- `examples/NRF_TRANSMITTER_CODE/`
+- `examples/NRF_RECEIVER_CODE/`
+- `examples/DUAL_NRF_SAME_BUS_TEST/`
 
-## What This Repo Solves
+## Why This Repo Exists
 
-- Clean baseline for bring-up of nRF24 modules
-- Known-good RF24 configuration matching between TX and RX
-- Simple packet transport pattern for control links
+When I start a new radio link, I use these examples to quickly verify:
 
-## Quick Bring-Up Checklist
+- wiring and pin mapping
+- channel/address matching
+- payload compatibility
+- basic delivery health (ACK behavior)
 
-1. Use stable 3.3V power with local decoupling at the radio.
-2. Match TX/RX settings exactly:
-   - channel
-   - data rate
-   - address width
-   - CRC length
-   - payload size
-3. Verify wiring for `CE`, `CSN`, `MOSI`, `MISO`, `SCK`.
-4. Confirm `radio.isChipConnected()` returns true.
+## Bring-Up Basics
 
-## Packet Example
-
-The default examples use a compact control packet with:
-
-- throttle, yaw, pitch, roll
-- flags byte
-- sequence counter
-
-## Safety Note
-
-Always implement failsafe behavior on receiver side (disarm/zero throttle on link timeout).
+1. Stable 3.3V power + local decoupling near the module.
+2. Match channel/rate/address/CRC/payload settings on both nodes.
+3. Confirm `radio.isChipConnected()` before debugging protocol logic.
+4. Add receiver-side failsafe before connecting this to motors/actuators.

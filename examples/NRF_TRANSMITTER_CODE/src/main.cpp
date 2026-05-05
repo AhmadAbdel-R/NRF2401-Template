@@ -41,7 +41,7 @@ void setup() {
   radio.disableDynamicPayloads();
   radio.setPayloadSize(sizeof(ControlPacket));
 
-  // No-ACK debug mode
+  // ACK mode for real delivery feedback from radio.write()
   radio.setAutoAck(true);
   radio.setRetries(5, 15);
 

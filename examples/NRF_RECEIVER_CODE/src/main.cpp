@@ -41,7 +41,7 @@ void setup() {
   radio.disableDynamicPayloads();
   radio.setPayloadSize(sizeof(ControlPacket));
 
-  // No-ACK debug mode
+  // ACK mode (matches transmitter configuration)
   radio.setAutoAck(true);
 
   radio.openReadingPipe(1, address);
